@@ -25,26 +25,47 @@ const createProduct = AsyncHandler(async (req, res) => {
 
 // 2️⃣ Get All Products
 const getAllProducts = AsyncHandler(async (req, res) => {
-  // Destructure query parameters safely
-  const { keyword = "" } = req.query;
+  const limit = Number(req.query.limit) || 10;
+  const page = Number(req.query.page) || 1;
 
-  const apiFunctionality = new APIFunctionality(Product.find(), {
-    keyword,
-  });
+  // Build query and filters
+  const apiFeatures = new APIFunctionality(Product.find(), req.query)
+    .search()
+    .filter(); // now apiFeatures.filterQuery is set and this.query has the base .find(filter)
 
-  // Get products from DB
-  const products = await Product.find();
+  // 1) This will ask "Hey MongoDB, count how many products exist that match the filters stored inside filterQuery"
+  const totalProducts = await Product.countDocuments(apiFeatures.filterQuery);
 
+  // 2) Compute total pages
+  const totalPages = Math.ceil(totalProducts / limit) || 1;
+
+  // 3) Apply pagination and execute the paginated query
+  apiFeatures.paginate(limit, totalPages);
+  const products = await apiFeatures.query;
+
+  // ✅ Return empty array (not error) when no products found
   if (!products || products.length === 0) {
-    throw new ApiError("No products found", 404);
+    return res.status(200).json(new ApiResponse(200, [], "No products found"));
   }
 
-  // Send JSON response
-  res
-    .status(200)
-    .json(
-      new ApiResponse(200, products, "All products retrieved successfully")
-    );
+  // Optional: adjust current page if it exceeds totalPages
+  const currentPage = page > totalPages ? totalPages : page;
+
+  // 4) Send response with meta
+  res.status(200).json({
+    statusCode: 200,
+    success: true,
+    data: products,
+    meta: {
+      totalProducts,
+      totalPages,
+      currentPage,
+      limit,
+    },
+    message: products.length
+      ? "Products retrieved successfully"
+      : "No products found",
+  });
 });
 
 // 3️⃣ Update Product
