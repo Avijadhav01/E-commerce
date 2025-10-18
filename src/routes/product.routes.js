@@ -14,11 +14,15 @@ import {
   deleteProduct,
   getProductById,
 } from "../controller/product.controller.js";
+import { Upload } from "../middleware/multer.middleware.js";
 
 router.route("/get-all-products").get(verifyUserAuth, getAllProducts);
-router
-  .route("/create")
-  .post(verifyUserAuth, authorizeRoles("admin"), createProduct);
+router.route("/create").post(
+  verifyUserAuth,
+  authorizeRoles("admin"),
+  Upload.array("productImages", 5), // allow up to 5 images
+  createProduct
+);
 router
   .route("/update/:id")
   .put(verifyUserAuth, authorizeRoles("admin"), updateProduct);

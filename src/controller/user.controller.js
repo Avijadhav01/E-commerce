@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { uploadOnCloudinary } from "../utils/cloudinaryUpload.js";
 import validator from "validator";
+import { v2 as cloudinary } from "cloudinary";
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
   try {
@@ -175,7 +176,16 @@ const deleteUser = AsyncHandler(async (req, res) => {
     throw new ApiError(404, "User not found");
   }
 
-  // Delete the user
+  // 🧹 Delete avatar from Cloudinary (if exists)
+  if (user.avatar?.public_id) {
+    try {
+      await cloudinary.uploader.destroy(user.avatar.public_id);
+    } catch (error) {
+      console.error("Error deleting avatar from Cloudinary:", error.message);
+    }
+  }
+
+  // 🧹 Delete the user
   await User.findByIdAndDelete(userId);
 
   return res

@@ -3,11 +3,20 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { Product } from "../models/product.model.js";
 import APIFunctionality from "../utils/apiFunctionality.js";
-
-//http://localhost:4000/api/v1/product/get-all-products?keyword=shirt
+import {
+  uploadOnCloudinary,
+  deleteImagesFromCloudinary,
+} from "../utils/cloudinaryUpload.js";
 
 // 1️⃣ Create Product
 const createProduct = AsyncHandler(async (req, res) => {
+  // Upload all images to Cloudinary
+  const uploadedImages = await Promise.all(
+    req.files.map((file) => uploadOnCloudinary(file.path, "product_images"))
+  );
+
+  // console.log(uploadedImages);
+
   if (!req.body || Object.keys(req.body).length === 0) {
     throw new ApiError("Product data is required", 400);
   }
@@ -16,11 +25,16 @@ const createProduct = AsyncHandler(async (req, res) => {
     throw new ApiError("Unauthorized: Please log in to create a product", 401);
   }
 
-  const product = await Product.create({ ...req.body, user: req.user._id });
+  const product = await Product.create({
+    ...req.body,
+    productImages: uploadedImages,
+    user: req.user._id,
+  });
 
   if (!product) {
     throw new ApiError("Error while creating new Product", 500);
   }
+  console.log("\nProduct created successfully.");
 
   res
     .status(201)
@@ -109,6 +123,14 @@ const deleteProduct = AsyncHandler(async (req, res) => {
   if (!deletedProduct) {
     throw new ApiError("Product not found", 404);
   }
+
+  // 2️⃣ Extract all public_ids (if any)
+  const publicIds =
+    deletedProduct.productImages?.map((img) => img.public_id) || [];
+
+  // 3️⃣ Delete images from Cloudinary
+  await deleteImagesFromCloudinary(publicIds);
+  console.log("Product deleted successfully.");
 
   res
     .status(200)

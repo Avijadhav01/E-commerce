@@ -18,7 +18,7 @@ const productSchema = new Schema(
       min: [0, "Price cannot be negative"],
       max: [9999999, "Price cannot exceed 7 digits"], // ✅ numeric max
     },
-    productImage: [
+    productImages: [
       {
         public_id: {
           type: String,

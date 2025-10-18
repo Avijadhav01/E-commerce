@@ -28,7 +28,12 @@ const uploadOnCloudinary = async (localFilePath) => {
 
       resource_type: "auto", // auto-detect (image, video, pdf, etc.)
     });
-    return result;
+
+    // ✅ Return only two useful fields
+    return {
+      public_id: result.public_id,
+      url: result.secure_url,
+    };
   } catch (error) {
     console.error("Error uploading file:", error);
     throw new ApiError(500, "Cloudinary upload failed");
@@ -37,4 +42,17 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-export { uploadOnCloudinary };
+// 🗑️ Delete multiple images from Cloudinary
+const deleteImagesFromCloudinary = async (publicIds = []) => {
+  try {
+    if (!publicIds.length) return;
+
+    const result = await cloudinary.api.delete_resources(publicIds);
+    console.log(`🗑️ Deleted ${publicIds.length} images from Cloudinary`);
+    return result;
+  } catch (error) {
+    console.error("❌ Cloudinary delete error:", error);
+  }
+};
+
+export { uploadOnCloudinary, deleteImagesFromCloudinary };

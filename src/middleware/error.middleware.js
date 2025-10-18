@@ -28,7 +28,7 @@ const errorMiddleware = (err, req, res, next) => {
   }
 
   // 🔹 Log minimal info to console
-  console.log(`💥 Error: ${err.name} | Message: ${message}`);
+  console.log(`\n💥Error: ${err.name} | Message: ${message}`);
 
   // 🔹 Send clean JSON response
   return res
