@@ -13,8 +13,8 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cookieParser());
 
 // 🧭 Routes
-app.use("/api/v1/product", productRouter);
-app.use("/api/v1/user", userRouter);
+app.use("/api/v1/products", productRouter);
+app.use("/api/v1/users", userRouter);
 
 // ⚠️ Error middleware should be the LAST one
 app.use(errorMiddleware);

@@ -12,7 +12,11 @@ const createProduct = AsyncHandler(async (req, res) => {
     throw new ApiError("Product data is required", 400);
   }
 
-  const product = await Product.create(req.body);
+  if (!req.user) {
+    throw new ApiError("Unauthorized: Please log in to create a product", 401);
+  }
+
+  const product = await Product.create({ ...req.body, user: req.user._id });
 
   if (!product) {
     throw new ApiError("Error while creating new Product", 500);
